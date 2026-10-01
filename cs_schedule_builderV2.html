@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Third Level CS Schedule Builder</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --border: #d9deea;
+      --primary: #315efb;
+      --primary-soft: #edf2ff;
+      --danger: #c93636;
+      --danger-soft: #fff0f0;
+      --success: #16794b;
+      --success-soft: #ecf8f2;
+      --shadow: 0 12px 30px rgba(30, 42, 70, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 310px minmax(900px, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 24px 20px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .brand p {
+      margin: 7px 0 20px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .small-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 9px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .small-btn:hover {
+      border-color: #b7c0d4;
+      background: #fafbfe;
+    }
+
+    .course-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .course-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fff;
+      transition: 0.15s ease;
+    }
+
+    .course-card.active {
+      border-color: var(--course);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--course) 15%, transparent);
+    }
+
+    .course-top {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 9px;
+      align-items: start;
+    }
+
+    .course-top input {
+      margin-top: 2px;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--course);
+    }
+
+    .course-name {
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .course-meta {
+      margin: 7px 0 0 29px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .course-meta.ok {
+      color: var(--success);
+      font-weight: 650;
+    }
+
+    .course-meta.warn {
+      color: var(--danger);
+      font-weight: 650;
+    }
+
+    .legend {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-chip {
+      width: 22px;
+      height: 12px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .legend-chip.lecture {
+      background: var(--primary-soft);
+      border: 1px solid #9bb0ff;
+    }
+
+    .legend-chip.lab {
+      background: #fff;
+      border: 1px dashed #8b96aa;
+    }
+
+    .legend-chip.selected {
+      background: var(--success-soft);
+      border: 1px solid #53a87e;
+    }
+
+    main {
+      padding: 26px;
+      min-width: 0;
+      overflow-x: auto;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+      min-width: 900px;
+    }
+
+    .page-head h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .page-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status {
+      min-width: 240px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 13px;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .status strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .status.good {
+      border-color: #a8d8c1;
+      background: var(--success-soft);
+    }
+
+    .status.bad {
+      border-color: #efb3b3;
+      background: var(--danger-soft);
+      color: #7e2626;
+    }
+
+    .table-wrap {
+      min-width: 1080px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th:last-child, td:last-child {
+      border-right: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    thead th {
+      background: #f7f9fc;
+      padding: 10px 7px;
+      text-align: center;
+    }
+
+    .day-col {
+      width: 92px;
+    }
+
+    .time-head {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .time-head span {
+      display: block;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    tbody td {
+      min-height: 142px;
+      height: 142px;
+      padding: 6px;
+      background: #fff;
+    }
+
+    .day-cell {
+      background: #fafbfe;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      padding-top: 12px;
+    }
+
+    .slot-stack {
+      display: grid;
+      gap: 6px;
+    }
+
+    .event {
+      border-radius: 9px;
+      padding: 7px 8px;
+      font-size: 10.5px;
+      line-height: 1.3;
+      border: 1px solid var(--event-color);
+      background: color-mix(in srgb, var(--event-color) 10%, #fff);
+    }
+
+    .event .title {
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .event .details {
+      color: #4f5a6d;
+      font-size: 9.5px;
+    }
+
+    .event.lecture::before {
+      content: "LECTURE";
+      display: inline-block;
+      margin-bottom: 4px;
+      color: var(--event-color);
+      font-weight: 900;
+      letter-spacing: .04em;
+      font-size: 8px;
+    }
+
+    .lab-option {
+      width: 100%;
+      text-align: left;
+      border-radius: 9px;
+      padding: 7px 8px;
+      border: 1px dashed var(--event-color);
+      background: #fff;
+      cursor: pointer;
+      color: var(--text);
+      transition: 0.15s ease;
+    }
+
+    .lab-option:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--event-color) 7%, #fff);
+      transform: translateY(-1px);
+    }
+
+    .lab-option .type {
+      color: var(--event-color);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      margin-bottom: 3px;
+    }
+
+    .lab-option .title {
+      font-size: 10.5px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .lab-option .details {
+      margin-top: 3px;
+      color: #566174;
+      font-size: 9.5px;
+      line-height: 1.3;
+    }
+
+    .lab-option.selected {
+      border-style: solid;
+      border-width: 2px;
+      background: color-mix(in srgb, var(--event-color) 13%, #fff);
+      padding: 6px 7px;
+    }
+
+    .lab-option.selected .type::after {
+      content: "  ✓ SELECTED";
+    }
+
+    .lab-option:disabled {
+      cursor: not-allowed;
+      opacity: .43;
+      background: #f2f3f5;
+      filter: grayscale(.2);
+    }
+
+    .empty-hint {
+      padding: 36px 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      min-width: 900px;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        display: block;
+      }
+
+      aside {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      main {
+        padding: 18px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <h1>Schedule Builder</h1>
+        <p>Third Level · Computer Science · New Bylaws</p>
+      </div>
+
+      <div class="toolbar">
+        <button class="small-btn" id="selectAll">Select all</button>
+        <button class="small-btn" id="clearAll">Clear</button>
+      </div>
+
+      <div id="courseList" class="course-list"></div>
+
+      <div class="legend">
+        <div class="legend-row"><span class="legend-chip lecture"></span> Lecture — appears automatically</div>
+        <div class="legend-row"><span class="legend-chip lab"></span> Lab/section — click to choose</div>
+        <div class="legend-row"><span class="legend-chip selected"></span> Your selected lab/section</div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="page-head">
+        <div>
+          <h2>Your weekly schedule</h2>
+          <p>Enable subjects on the left. Every enabled subject shows its two lectures and all available lab/section choices.</p>
+        </div>
+        <div id="status" class="status">
+          <strong>No subjects selected</strong>
+          Enable a subject to begin.
+        </div>
+      </div>
+
+      <div id="schedule"></div>
+    </main>
+  </div>
+
+  <script>
+    const DAYS = ["Saturday", "Monday", "Tuesday", "Wednesday"];
+
+    const TIME_COLUMNS = [
+      { lecture: "08:00–09:15", lab: "08:00–09:30", start: 8 * 60, lectureEnd: 9 * 60 + 15, labEnd: 9 * 60 + 30 },
+      { lecture: "09:30–10:45", lab: "09:30–11:00", start: 9 * 60 + 30, lectureEnd: 10 * 60 + 45, labEnd: 11 * 60 },
+      { lecture: "11:15–12:30", lab: "11:15–12:45", start: 11 * 60 + 15, lectureEnd: 12 * 60 + 30, labEnd: 12 * 60 + 45 },
+      { lecture: "12:45–14:00", lab: "12:45–14:15", start: 12 * 60 + 45, lectureEnd: 14 * 60, labEnd: 14 * 60 + 15 },
+      { lecture: "14:30–15:45", lab: "14:30–16:00", start: 14 * 60 + 30, lectureEnd: 15 * 60 + 45, labEnd: 16 * 60 },
+      { lecture: "16:15–17:30", lab: "16:15–17:45", start: 16 * 60 + 15, lectureEnd: 17 * 60 + 30, labEnd: 17 * 60 + 45 },
+      { lecture: "18:00–19:15", lab: "18:00–19:30", start: 18 * 60, lectureEnd: 19 * 60 + 15, labEnd: 19 * 60 + 30 }
+    ];
+
+    const COURSES = {
+      algorithms: {
+        name: "Algorithms Analysis and Design",
+        short: "Algorithms Analysis & Design",
+        color: "#6d4aff",
+        lectures: [
+          { day: "Monday", col: 3, room: "I. Farag Hall", teacher: "Dr. Basher Youssef" },
+          { day: "Monday", col: 4, room: "I. Farag Hall", teacher: "Dr. Basher Youssef" }
+        ],
+        labs: [
+          { id: "alg-s1s2", day: "Saturday", col: 0, room: "Lab 5", section: "S1, S2" },
+          { id: "alg-s3s4", day: "Monday", col: 5, room: "Lab 5", section: "S3, S4" },
+          { id: "alg-s5s6", day: "Tuesday", col: 0, room: "Lab 7", section: "S5, S6" },
+          { id: "alg-s7s8", day: "Tuesday", col: 3, room: "Lab 7", section: "S7, S8" }
+        ]
+      },
+
+      informationTheory: {
+        name: "Information Theory and Data Compression",
+        short: "Information Theory & Data Compression",
+        color: "#0f8f83",
+        lectures: [
+          { day: "Saturday", col: 2, room: "I. Farag Hall", teacher: "Dr. Asmaa Ahmed" },
+          { day: "Saturday", col: 3, room: "I. Farag Hall", teacher: "Dr. Asmaa Ahmed" }
+        ],
+        labs: [
+          { id: "itdc-s1s2", day: "Saturday", col: 1, room: "Library Lab", section: "S1, S2" },
+          { id: "itdc-s3s4", day: "Tuesday", col: 3, room: "Library Lab", section: "S3, S4" },
+          { id: "itdc-s5s6", day: "Saturday", col: 0, room: "Lab 3", section: "S5, S6" },
+          { id: "itdc-s7s8", day: "Wednesday", col: 2, room: "Lab 6", section: "S7, S8" },
+          { id: "itdc-s9s10", day: "Wednesday", col: 3, room: "Lab 3", section: "S9, S10" }
+        ]
+      },
+
+      coa: {
+        name: "Computer Organization and Architecture",
+        short: "Computer Organization & Architecture",
+        color: "#d46a1f",
+        lectures: [
+          { day: "Saturday", col: 4, room: "I. Farag Hall", teacher: "Dr. Ahmed Shawky" },
+          { day: "Saturday", col: 5, room: "I. Farag Hall", teacher: "Dr. Ahmed Shawky" }
+        ],
+        labs: [
+          { id: "coa-s1s2", day: "Wednesday", col: 0, room: "Lab 6", section: "S1, S2" },
+          { id: "coa-s3s4", day: "Monday", col: 2, room: "Lab 7", section: "S3, S4" },
+          { id: "coa-s5s6", day: "Wednesday", col: 1, room: "Lab 7", section: "S5, S6" },
+          { id: "coa-s7s8", day: "Wednesday", col: 2, room: "Lab 5", section: "S7, S8" }
+        ]
+      },
+
+      dataStructures: {
+        name: "Advanced Data Structures",
+        short: "Advanced Data Structures",
+        color: "#2777c8",
+        lectures: [
+          { day: "Monday", col: 0, room: "Hall 8", teacher: "Dr. Amin Alam" },
+          { day: "Monday", col: 1, room: "Hall 8", teacher: "Dr. Amin Alam" }
+        ],
+        labs: [
+          { id: "ads-s1s2", day: "Monday", col: 2, room: "Lab 8", section: "S1, S2" },
+          { id: "ads-s3s4", day: "Tuesday", col: 1, room: "Lab 7", section: "S3, S4" },
+          { id: "ads-s5s6", day: "Wednesday", col: 3, room: "Lab 6", section: "S5, S6" },
+          { id: "ads-s7s8", day: "Wednesday", col: 2, room: "Lab 8", section: "S7, S8" }
+        ]
+      },
+
+      software: {
+        name: "Advanced Software Engineering",
+        short: "Advanced Software Engineering",
+        color: "#bd3d75",
+        lectures: [
+          { day: "Wednesday", col: 4, room: "I. Farag Hall", teacher: "Dr. Desoky Abdel-Kawy" },
+          { day: "Wednesday", col: 5, room: "I. Farag Hall", teacher: "Dr. Desoky Abdel-Kawy" }
+        ],
+        labs: [
+          { id: "ase-s3s4", day: "Wednesday", col: 0, room: "Lab 5", section: "S3, S4" },
+          { id: "ase-s5s6", day: "Monday", col: 5, room: "Lab 7", section: "S5, S6" },
+          { id: "ase-s7s8", day: "Wednesday", col: 3, room: "Library Lab", section: "S7, S8" }
+        ]
+      },
+
+      operatingSystems: {
+        name: "Operating Systems",
+        short: "Operating Systems",
+        color: "#488b3b",
+        lectures: [
+          { day: "Tuesday", col: 4, room: "I. Farag Hall", teacher: "Prof. Khaled Tawfik" },
+          { day: "Tuesday", col: 5, room: "I. Farag Hall", teacher: "Prof. Khaled Tawfik" }
+        ],
+        labs: [
+          { id: "os-s1s2", day: "Tuesday", col: 1, room: "Lab 5", section: "S1, S2" },
+          { id: "os-s3s4", day: "Tuesday", col: 0, room: "Lab 5", section: "S3, S4" },
+          { id: "os-s5s6", day: "Tuesday", col: 0, room: "Lab 6", section: "S5, S6" },
+          { id: "os-s7s8", day: "Tuesday", col: 1, room: "Lab 3", section: "S7, S8" }
+        ]
+      }
+    };
+
+    const activeCourses = new Set();
+    const chosenLabs = {};
+
+    function intervalFor(item, type) {
+      const col = TIME_COLUMNS[item.col];
+      return {
+        start: col.start,
+        end: type === "lecture" ? col.lectureEnd : col.labEnd
+      };
+    }
+
+    function overlaps(a, b) {
+      return a.start < b.end && b.start < a.end;
+    }
+
+    function conflictReason(courseKey, lab) {
+      const candidate = intervalFor(lab, "lab");
+
+      for (const otherKey of activeCourses) {
+        const other = COURSES[otherKey];
+
+        for (const lec of other.lectures) {
+          if (lec.day !== lab.day) continue;
+          if (overlaps(candidate, intervalFor(lec, "lecture"))) {
+            return `Conflicts with ${other.short} lecture`;
+          }
+        }
+
+        const chosenId = chosenLabs[otherKey];
+        if (!chosenId || otherKey === courseKey) continue;
+
+        const chosen = other.labs.find(x => x.id === chosenId);
+        if (chosen && chosen.day === lab.day && overlaps(candidate, intervalFor(chosen, "lab"))) {
+          return `Conflicts with ${other.short} selected lab`;
+        }
+      }
+
+      return "";
+    }
+
+    function selectedLabConflict(courseKey) {
+      const id = chosenLabs[courseKey];
+      if (!id) return "";
+      const lab = COURSES[courseKey].labs.find(x => x.id === id);
+      if (!lab) return "";
+      return conflictReason(courseKey, lab);
+    }
+
+    function renderCourseList() {
+      const container = document.getElementById("courseList");
+      container.innerHTML = "";
+
+      Object.entries(COURSES).forEach(([key, course]) => {
+        const active = activeCourses.has(key);
+        const selectedId = chosenLabs[key];
+        const selected = course.labs.find(x => x.id === selectedId);
+        const conflict = active ? selectedLabConflict(key) : "";
+
+        const card = document.createElement("label");
+        card.className = `course-card${active ? " active" : ""}`;
+        card.style.setProperty("--course", course.color);
+
+        let meta = `${course.lectures.length} lectures · choose 1 lab/section`;
+        let metaClass = "course-meta";
+
+        if (active && selected) {
+          meta = `${selected.section} · ${selected.day} · ${TIME_COLUMNS[selected.col].lab}`;
+          metaClass += conflict ? " warn" : " ok";
+          if (conflict) meta += ` · CONFLICT`;
+        }
+
+        card.innerHTML = `
+          <div class="course-top">
+            <input type="checkbox" data-course="${key}" ${active ? "checked" : ""}>
+            <div class="course-name">${course.name}</div>
+          </div>
+          <div class="${metaClass}">${meta}</div>
+        `;
+
+        card.querySelector("input").addEventListener("change", e => {
+          if (e.target.checked) {
+            activeCourses.add(key);
+          } else {
+            activeCourses.delete(key);
+            delete chosenLabs[key];
+          }
+          render();
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function createLecture(course) {
+      const div = document.createElement("div");
+      div.className = "event lecture";
+      div.style.setProperty("--event-color", course.color);
+      div.innerHTML = `
+        <div class="title">${course.short}</div>
+        <div class="details">${course.teacherText || ""}</div>
+      `;
+      return div;
+    }
+
+    function renderSchedule() {
+      const mount = document.getElementById("schedule");
+
+      if (activeCourses.size === 0) {
+        mount.innerHTML = `<div class="empty-hint">Choose at least one subject from the left to display its timetable.</div>`;
+        return;
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "table-wrap";
+
+      const table = document.createElement("table");
+      const head = document.createElement("thead");
+      const headRow = document.createElement("tr");
+
+      const dayHead = document.createElement("th");
+      dayHead.className = "day-col";
+      dayHead.textContent = "Weekday";
+      headRow.appendChild(dayHead);
+
+      TIME_COLUMNS.forEach(col => {
+        const th = document.createElement("th");
+        th.innerHTML = `<div class="time-head">${col.lecture}<span>Lab: ${col.lab}</span></div>`;
+        headRow.appendChild(th);
+      });
+
+      head.appendChild(headRow);
+      table.appendChild(head);
+
+      const body = document.createElement("tbody");
+
+      DAYS.forEach(day => {
+        const tr = document.createElement("tr");
+        const dayCell = document.createElement("td");
+        dayCell.className = "day-cell";
+        dayCell.textContent = day;
+        tr.appendChild(dayCell);
+
+        TIME_COLUMNS.forEach((_, colIndex) => {
+          const td = document.createElement("td");
+          const stack = document.createElement("div");
+          stack.className = "slot-stack";
+
+          Object.entries(COURSES).forEach(([courseKey, course]) => {
+            if (!activeCourses.has(courseKey)) return;
+
+            course.lectures
+              .filter(lec => lec.day === day && lec.col === colIndex)
+              .forEach(lec => {
+                const div = document.createElement("div");
+                div.className = "event lecture";
+                div.style.setProperty("--event-color", course.color);
+                div.innerHTML = `
+                  <div class="title">${course.short}</div>
+                  <div class="details">${lec.room}<br>${lec.teacher}</div>
+                `;
+                stack.appendChild(div);
+              });
+
+            course.labs
+              .filter(lab => {
+                const selectedLabId = chosenLabs[courseKey];
+                const isVisible = !selectedLabId || lab.id === selectedLabId;
+                return isVisible && lab.day === day && lab.col === colIndex;
+              })
+              .forEach(lab => {
+                const btn = document.createElement("button");
+                const selected = chosenLabs[courseKey] === lab.id;
+                const reason = selected ? "" : conflictReason(courseKey, lab);
+
+                btn.className = `lab-option${selected ? " selected" : ""}`;
+                btn.style.setProperty("--event-color", course.color);
+                btn.disabled = Boolean(reason);
+                btn.title = reason || "Choose this lab/section";
+                btn.innerHTML = `
+                  <div class="type">LAB / SECTION</div>
+                  <div class="title">${course.short}</div>
+                  <div class="details">${lab.room} · ${lab.section}${reason ? `<br>⚠ ${reason}` : ""}</div>
+                `;
+
+                btn.addEventListener("click", () => {
+                  chosenLabs[courseKey] = selected ? undefined : lab.id;
+                  if (!chosenLabs[courseKey]) delete chosenLabs[courseKey];
+                  render();
+                });
+
+                stack.appendChild(btn);
+              });
+          });
+
+          td.appendChild(stack);
+          tr.appendChild(td);
+        });
+
+        body.appendChild(tr);
+      });
+
+      table.appendChild(body);
+      wrap.appendChild(table);
+      mount.innerHTML = "";
+      mount.appendChild(wrap);
+    }
+
+    function renderStatus() {
+      const status = document.getElementById("status");
+      const total = activeCourses.size;
+
+      if (!total) {
+        status.className = "status";
+        status.innerHTML = `<strong>No subjects selected</strong>Enable a subject to begin.`;
+        return;
+      }
+
+      const missing = [...activeCourses].filter(key => !chosenLabs[key]);
+      const conflicts = [...activeCourses]
+        .map(key => ({ key, reason: selectedLabConflict(key) }))
+        .filter(x => x.reason);
+
+      if (conflicts.length) {
+        status.className = "status bad";
+        status.innerHTML = `<strong>${conflicts.length} lab conflict${conflicts.length > 1 ? "s" : ""}</strong>Change the highlighted lab selections before using the timetable.`;
+      } else if (missing.length) {
+        status.className = "status";
+        status.innerHTML = `<strong>${total - missing.length}/${total} labs selected</strong>Choose one lab/section for each enabled subject.`;
+      } else {
+        status.className = "status good";
+        status.innerHTML = `<strong>Schedule complete</strong>All ${total} enabled subjects have one lab/section selected.`;
+      }
+    }
+
+    function render() {
+      renderCourseList();
+      renderSchedule();
+      renderStatus();
+    }
+
+    document.getElementById("selectAll").addEventListener("click", () => {
+      Object.keys(COURSES).forEach(key => activeCourses.add(key));
+      render();
+    });
+
+    document.getElementById("clearAll").addEventListener("click", () => {
+      activeCourses.clear();
+      Object.keys(chosenLabs).forEach(key => delete chosenLabs[key]);
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
